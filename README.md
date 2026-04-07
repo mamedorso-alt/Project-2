@@ -37,6 +37,7 @@ cp .env.example .env
 - `LLM_TEMPERATURE`
 - `LLM_MAX_TOKENS`
 - `LLM_TIMEOUT_SECONDS`
+- `LLM_MAX_OUTPUT_CHARS` (жесткий лимит длины ответа в символах)
 
 Бюджет и контекст:
 - `DAILY_BUDGET_USD` (по умолчанию `2.0`)

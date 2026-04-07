@@ -19,8 +19,12 @@ class LLMService:
 
     def system_prompt(self) -> str:
         return (
-            "You are a helpful Telegram assistant. "
-            "Answer in the user's language. Keep answers concise but useful."
+            "You are a concise Telegram assistant. "
+            "Answer in the user's language. "
+            "Keep responses short, dry, and factual. "
+            "Do not use praise or validation at the start "
+            "(e.g. 'good question', 'great point'). "
+            "Start directly with the answer."
         )
 
     async def stream_answer(

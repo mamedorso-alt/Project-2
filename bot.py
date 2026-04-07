@@ -26,6 +26,7 @@ def main() -> None:
         output_cost_per_1m=settings.model_output_cost_per_1m_tokens_usd,
     )
     app.bot_data["stream_edit_interval_ms"] = settings.stream_edit_interval_ms
+    app.bot_data["llm_max_output_chars"] = settings.llm_max_output_chars
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("weather", weather))

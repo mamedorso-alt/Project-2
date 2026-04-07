@@ -12,6 +12,7 @@ class Settings:
     llm_temperature: float
     llm_max_tokens: int
     llm_timeout_seconds: int
+    llm_max_output_chars: int
     daily_budget_usd: float
     budget_timezone: str
     context_max_turns: int
@@ -39,6 +40,7 @@ def load_settings() -> Settings:
         llm_temperature=float(os.getenv("LLM_TEMPERATURE", "0.6")),
         llm_max_tokens=int(os.getenv("LLM_MAX_TOKENS", "450")),
         llm_timeout_seconds=int(os.getenv("LLM_TIMEOUT_SECONDS", "30")),
+        llm_max_output_chars=int(os.getenv("LLM_MAX_OUTPUT_CHARS", "550")),
         daily_budget_usd=float(os.getenv("DAILY_BUDGET_USD", "2.0")),
         budget_timezone=os.getenv("BUDGET_TIMEZONE", "UTC"),
         context_max_turns=int(os.getenv("CONTEXT_MAX_TURNS", "8")),

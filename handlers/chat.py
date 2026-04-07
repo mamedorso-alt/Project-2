@@ -2,6 +2,7 @@ import logging
 import time
 
 from telegram import Update
+from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 
 from services.budget_service import BudgetService
@@ -24,6 +25,7 @@ async def chat_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     store: ContextStore = context.application.bot_data["context_store"]
     budget: BudgetService = context.application.bot_data["budget_service"]
     stream_interval = context.application.bot_data["stream_edit_interval_ms"] / 1000
+    max_output_chars = context.application.bot_data["llm_max_output_chars"]
 
     if not budget.can_spend():
         await update.message.reply_text(
@@ -36,28 +38,47 @@ async def chat_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     placeholder = await update.message.reply_text("Думаю...")
     last_edit = time.monotonic()
+    last_sent_text = "Думаю..."
     final_text = ""
 
     try:
         async def on_chunk(partial_text: str) -> None:
-            nonlocal last_edit
+            nonlocal last_edit, last_sent_text
             now = time.monotonic()
-            if now - last_edit >= stream_interval and partial_text.strip():
-                await context.bot.edit_message_text(
-                    chat_id=chat_id,
-                    message_id=placeholder.message_id,
-                    text=partial_text,
-                )
-                last_edit = now
+            if (
+                now - last_edit >= stream_interval
+                and partial_text.strip()
+                and partial_text != last_sent_text
+            ):
+                try:
+                    await context.bot.edit_message_text(
+                        chat_id=chat_id,
+                        message_id=placeholder.message_id,
+                        text=partial_text,
+                    )
+                    last_sent_text = partial_text
+                    last_edit = now
+                except BadRequest as edit_err:
+                    if "Message is not modified" not in str(edit_err):
+                        raise
 
         final_text, usage = await llm.stream_answer(messages, on_chunk=on_chunk)
 
         if final_text:
-            await context.bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=placeholder.message_id,
-                text=final_text,
-            )
+            final_text = final_text.strip()
+            if len(final_text) > max_output_chars:
+                final_text = final_text[: max_output_chars - 1].rstrip() + "…"
+            if final_text != last_sent_text:
+                try:
+                    await context.bot.edit_message_text(
+                        chat_id=chat_id,
+                        message_id=placeholder.message_id,
+                        text=final_text,
+                    )
+                    last_sent_text = final_text
+                except BadRequest as edit_err:
+                    if "Message is not modified" not in str(edit_err):
+                        raise
         else:
             await context.bot.edit_message_text(
                 chat_id=chat_id,
